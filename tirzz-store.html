@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tirzz Store — Auto Order</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --card: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #c8a96e;
+    --accent2: #e8c88e;
+    --text: #f0ede8;
+    --muted: #8a8a9a;
+    --success: #4caf7d;
+    --error: #e05c5c;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grain */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* Glow */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 400px;
+    background: radial-gradient(ellipse, rgba(200,169,110,0.08) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 48px 0 36px;
+    position: relative;
+  }
+
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, rgba(200,169,110,0.15), rgba(200,169,110,0.05));
+    border: 1px solid rgba(200,169,110,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    animation: fadeDown 0.6s ease both;
+  }
+
+  .logo-badge::before {
+    content: '✦';
+    font-size: 8px;
+  }
+
+  h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2.2rem, 8vw, 3rem);
+    font-weight: 900;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    animation: fadeDown 0.6s 0.1s ease both;
+  }
+
+  h1 span {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .subtitle {
+    color: var(--muted);
+    font-size: 14px;
+    margin-top: 10px;
+    letter-spacing: 0.3px;
+    animation: fadeDown 0.6s 0.2s ease both;
+  }
+
+  /* Divider */
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 28px 0;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border));
+  }
+
+  .divider::after { background: linear-gradient(to left, transparent, var(--border)); }
+
+  .divider span {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Card */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 28px;
+    margin-bottom: 16px;
+    animation: fadeUp 0.6s 0.4s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(200,169,110,0.4), transparent);
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    width: 16px;
+    height: 1px;
+    background: var(--accent);
+  }
+
+  /* Form */
+  .field {
+    margin-bottom: 18px;
+  }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+  }
+
+  input, select, textarea {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s;
+    outline: none;
+    -webkit-appearance: none;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    border-color: rgba(200,169,110,0.5);
+    box-shadow: 0 0 0 3px rgba(200,169,110,0.08);
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--muted); opacity: 0.6; }
+
+  select {
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%238a8a9a' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    padding-right: 40px;
+  }
+
+  select option { background: var(--surface); }
+
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Product Grid */
+  .product-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .product-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .product-item:hover {
+    border-color: rgba(200,169,110,0.4);
+    transform: translateY(-2px);
+  }
+
+  .product-item.selected {
+    border-color: var(--accent);
+    background: rgba(200,169,110,0.08);
+  }
+
+  .product-item.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 8px; right: 10px;
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 700;
+  }
+
+  .product-emoji { font-size: 24px; margin-bottom: 8px; }
+
+  .product-name {
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+  }
+
+  .product-price {
+    font-size: 11px;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Qty Control */
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    width: fit-content;
+  }
+
+  .qty-btn {
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 20px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .qty-btn:hover { background: rgba(200,169,110,0.1); }
+
+  .qty-value {
+    width: 50px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
+    height: 44px;
+    line-height: 44px;
+  }
+
+  /* Summary */
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .summary-row:last-child { border-bottom: none; }
+
+  .summary-row .label { color: var(--muted); }
+
+  .summary-row .value { font-weight: 500; }
+
+  .summary-row.total .label {
+    font-weight: 700;
+    color: var(--text);
+    font-size: 14px;
+  }
+
+  .summary-row.total .value {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    color: var(--accent);
+  }
+
+  /* CTA Button */
+  .btn-order {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: #0a0a0f;
+    border: none;
+    border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s;
+    position: relative;
+    overflow: hidden;
+    animation: fadeUp 0.6s 0.6s ease both;
+  }
+
+  .btn-order::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,0);
+    transition: background 0.2s;
+  }
+
+  .btn-order:hover::before { background: rgba(255,255,255,0.1); }
+  .btn-order:active { transform: scale(0.98); }
+
+  .btn-order:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 22px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 999;
+    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: rgba(76,175,125,0.4); }
+  .toast.error { border-color: rgba(224,92,92,0.4); }
+
+  /* Order History */
+  .history-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .history-id { color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+  .history-product { font-weight: 600; }
+
+  .status-badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 100px;
+  }
+
+  .status-pending { background: rgba(200,169,110,0.15); color: var(--accent); }
+  .status-done { background: rgba(76,175,125,0.15); color: var(--success); }
+  .status-proses { background: rgba(100,149,237,0.15); color: #6495ed; }
+
+  .empty-history {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    padding: 24px 0;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 4px;
+    margin-bottom: 20px;
+    animation: fadeUp 0.6s 0.35s ease both;
+  }
+
+  .tab {
+    flex: 1;
+    padding: 10px;
+    background: none;
+    border: none;
+    border-radius: 10px;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab.active {
+    background: var(--card);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  /* Animations */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section { display: none; }
+  .section.active { display: block; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <div class="logo-badge">Auto Order System</div>
+    <h1>Tirzz <span>Store</span></h1>
+    <p class="subtitle">Pesan cepat, mudah, dan aman ✦</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('order')">🛒 Order</button>
+    <button class="tab" onclick="switchTab('history')">📦 Riwayat</button>
+  </div>
+
+  <!-- ORDER SECTION -->
+  <div class="section active" id="tab-order">
+
+    <!-- Produk -->
+    <div class="card">
+      <div class="card-title">Pilih Produk</div>
+      <div class="product-grid" id="productGrid">
+        <div class="product-item selected" onclick="selectProduct(this, 'Akses 1h', 2000)" data-name="Akses 1h" data-price="2000">
+          <div class="product-emoji">🌠</div>
+          <div class="product-name">Akses 1h</div>
+          <div class="product-price">Rp 2.000</div>
+        </div>
+        <div class="product-item" onclick="selectProduct(this, 'Akses permanen', 40)" data-name="Akses permanen" data-price="40">
+          <div class="product-emoji">📱</div>
+          <div class="product-name">Akses permanen</div>
+          <div class="product-price">Rp 15.000</div>
+        </div>
+        <div class="product-item" onclick="selectProduct(this, 'Full Up Apk', 25000)" data-name="Full Up Apk" data-price="25000">
+          <div class="product-emoji">🌐</div>
+          <div class="product-name">Full Up Apk</div>
+          <div class="product-price">Rp 25000</div>
+        </div>
+        <div class="product-item" onclick="selectProduct(this, 'Jasa pembuatan apk', 35000)" data-name="Jasa pembuatan apk" data-price="35000">
+          <div class="product-emoji">🌐</div>
+          <div class="product-name">Jasa pembuatan apk</div>
+          <div class="product-price">Rp 35000</div>
+        </div>
+        <div class="product-item" onclick="selectProduct(this, 'Jasa pembuatan bot bug', 20000)" data-name="Jasa pembuatan bot bug" data-price="20000">
+          <div class="product-emoji">⚡</div>
+          <div class="product-name">Jasa pembuatan bot bug</div>
+          <div class="product-price">Rp 20.000</div>
+        </div>
+        <div class="product-item" onclick="selectProduct(this, 'Jasa pembuatan apk v2, 40)" data-name="Voucher Game" data-price="40">
+          <div class="product-emoji">🌌</div>
+          <div class="product-name">Voucher Game</div>
+          <div class="product-price">Rp 15.000</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Info Order -->
+    <div class="card">
+      <div class="card-title">Detail Order</div>
+
+      <div class="field">
+        <label>Nomor Tujuan</label>
+        <input type="tel" id="user/pw" placeholder="Contoh: Tirzz|123" maxlength="15">
+      </div>
+
+      <div class="field">
+        <label>List Apk</label>
+        <select id="Apk bug">
+          <option value="">— Pilih Operator —</option>
+          <option>v1</option>
+          <option>v2</option>
+          <option>v3</option>
+          <option>v4</option>
+          <option>v5</option>
+          <option>v6</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Jumlah</label>
+        <div class="qty-control">
+          <button class="qty-btn" onclick="changeQty(-1)">−</button>
+          <div class="qty-value" id="qtyVal">1</div>
+          <button class="qty-btn" onclick="changeQty(1)">+</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Metode Pembayaran</label>
+        <select id="payment">
+          <option value="">— Pilih Metode —</option>
+          <option>DANA</option>
+          <option>OVO</option>
+          <option>GoPay</option>
+          <option>ShopeePay</option>
+          <option>Transfer Bank</option>
+          <option>COD</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Catatan (opsional)</label>
+        <textarea id="catatan" placeholder="Contoh: tolong segera diproses..."></textarea>
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="card">
+      <div class="card-title">Ringkasan</div>
+      <div class="summary-row">
+        <span class="label">Produk</span>
+        <span class="value" id="sumProduk">Pulsa 10K</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Harga Satuan</span>
+        <span class="value" id="sumHarga">Rp 9.500</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Qty</span>
+        <span class="value" id="sumQty">1</span>
+      </div>
+      <div class="summary-row">
+        <span class="label">Biaya Admin</span>
+        <span class="value">Rp 500</span>
+      </div>
+      <div class="summary-row total">
+        <span class="label">Total Bayar</span>
+        <span class="value" id="sumTotal">Rp 10.000</span>
+      </div>
+    </div>
+
+    <button class="btn-order" onclick="submitOrder()">
+      ✦ Buat Pesanan Sekarang
+    </button>
+
+  </div>
+
+  <!-- HISTORY SECTION -->
+  <div class="section" id="tab-history">
+    <div class="card">
+      <div class="card-title">Riwayat Pesanan</div>
+      <div id="historyList">
+        <div class="empty-history">Belum ada pesanan 📭</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg">Berhasil!</span>
+</div>
+
+<script>
+  let selectedProduct = { name: 'Pulsa 10K', price: 9500 };
+  let qty = 1;
+  let orders = JSON.parse(localStorage.getItem('tirzz_orders') || '[]');
+
+  function selectProduct(el, name, price) {
+    document.querySelectorAll('.product-item').forEach(i => i.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedProduct = { name, price };
+    updateSummary();
+  }
+
+  function changeQty(delta) {
+    qty = Math.max(1, Math.min(99, qty + delta));
+    document.getElementById('qtyVal').textContent = qty;
+    updateSummary();
+  }
+
+  function updateSummary() {
+    const total = selectedProduct.price * qty + 500;
+    document.getElementById('sumProduk').textContent = selectedProduct.name;
+    document.getElementById('sumHarga').textContent = 'Rp ' + selectedProduct.price.toLocaleString('id-ID');
+    document.getElementById('sumQty').textContent = qty;
+    document.getElementById('sumTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  }
+
+  function submitOrder() {
+    const nomor = document.getElementById('nomorTujuan').value.trim();
+    const operator = document.getElementById('operator').value;
+    const payment = document.getElementById('payment').value;
+
+    if (!nomor) { showToast('❌', 'Nomor tujuan wajib diisi!', 'error'); return; }
+    if (!operator) { showToast('❌', 'Pilih operator dulu!', 'error'); return; }
+    if (!payment) { showToast('❌', 'Pilih metode pembayaran!', 'error'); return; }
+    if (nomor.length < 9) { showToast('❌', 'Nomor tidak valid!', 'error'); return; }
+
+    const orderId = 'TZ' + Date.now().toString().slice(-6);
+    const order = {
+      id: orderId,
+      product: selectedProduct.name,
+      nomor,
+      operator,
+      payment,
+      qty,
+      total: selectedProduct.price * qty + 500,
+      catatan: document.getElementById('catatan').value,
+      status: 'pending',
+      time: new Date().toLocaleString('id-ID')
+    };
+
+    orders.unshift(order);
+    localStorage.setItem('tirzz_orders', JSON.stringify(orders));
+
+    // Reset form
+    document.getElementById('nomorTujuan').value = '';
+    document.getElementById('catatan').value = '';
+    document.getElementById('operator').value = '';
+    document.getElementById('payment').value = '';
+    qty = 1;
+    document.getElementById('qtyVal').textContent = '1';
+    updateSummary();
+
+    showToast('✦', `Order ${orderId} berhasil dibuat!`, 'success');
+
+    // Simulate processing after 2s
+    setTimeout(() => {
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        orders[idx].status = 'proses';
+        localStorage.setItem('tirzz_orders', JSON.stringify(orders));
+        renderHistory();
+      }
+    }, 2000);
+
+    // Done after 6s
+    setTimeout(() => {
+      const idx = orders.findIndex(o => o.id === orderId);
+      if (idx !== -1) {
+        orders[idx].status = 'done';
+        localStorage.setItem('tirzz_orders', JSON.stringify(orders));
+        renderHistory();
+        showToast('✓', `Order ${orderId} selesai!`, 'success');
+      }
+    }, 6000);
+
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const list = document.getElementById('historyList');
+    if (orders.length === 0) {
+      list.innerHTML = '<div class="empty-history">Belum ada pesanan 📭</div>';
+      return;
+    }
+    list.innerHTML = orders.map(o => `
+      <div class="history-item">
+        <div>
+          <div class="history-id">#${o.id} · ${o.time}</div>
+          <div class="history-product">${o.product} × ${o.qty}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${o.nomor} · ${o.operator}</div>
+          <div style="font-size:12px;color:var(--accent);margin-top:4px;font-weight:600">Rp ${o.total.toLocaleString('id-ID')}</div>
+        </div>
+        <span class="status-badge status-${o.status}">${o.status === 'pending' ? 'Pending' : o.status === 'proses' ? 'Proses' : 'Selesai'}</span>
+      </div>
+    `).join('');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+    if (tab === 'history') renderHistory();
+  }
+
+  function showToast(icon, msg, type) {
+    const toast = document.getElementById('toast');
+    document.getElementById('toastIcon').textContent = icon;
+    document.getElementById('toastMsg').textContent = msg;
+    toast.className = 'toast ' + type + ' show';
+    setTimeout(() => toast.classList.remove('show'), 3000);
+  }
+
+  // Init
+  updateSummary();
+  renderHistory();
+</script>
+</body>
+</html>
